@@ -21,14 +21,29 @@ while 1:
     cv2.imshow("preview",img)
     if data:
         a=data
-    cv2.waitKey(10)
-    
-    if a:
+    wk=cv2.waitKey(10)
+    if wk==32:
+        em=pymsgbox.prompt("Enter Email",'Email',"@niser.ac.in")
+        if em==None :
+                        a=None
+                        continue
         cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
+        maske=cs["Email"].values==em
+        pose = np.flatnonzero(maske)
+        if len(pose)>0:
+            for i in range(len(pose)):
+                if cs["Count"][pose[i]]>0:
+                    a=cs['Secret'][pose[i]]
+                    break
+            ctypes.windll.user32.MessageBoxW(0, "All Coupons exhausted! ","Coupons Ranout.", 16)
+        else:
+            ctypes.windll.user32.MessageBoxW(0, "Please enter a valid Email! ","Not a Registered Email.", 16)
+
+    if a:
+        cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv") 
         mask=cs["Secret"].values==a
         pos = np.flatnonzero(mask)
         if len(pos)!=0 :
-            
             if cs["Count"][pos[0]]>0:
                 if cs["Count"][pos[0]]>1:
                     playsound(r"\\PERSEUS\QR-Cop\retro.wav")
