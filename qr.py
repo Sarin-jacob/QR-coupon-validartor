@@ -1,3 +1,4 @@
+from datetime import datetime
 import socket
 ho=socket.gethostname()
 import smtplib
@@ -16,11 +17,13 @@ cap = cv2.VideoCapture(0)
 logger=logging.getLogger()
 logging.basicConfig(level=logging.INFO,filename=r"\\PERSEUS\QR-Cop\Coupon.log",format="  %(asctime)s -> %(message)s")
 
-def mail_send(name,ide,cop=1,purchased=1,timedate="now"):
+def mail_send(name,ide,cop=1,purchased=1):
+    now = datetime.now()
+    timedate = now.strftime("%d/%m/%Y %H:%M:%S")
     if cop!=1:
         mail_content = f'''
 Hello {name}, 
-        This mail is to notify you that, {cop} Food Coupons out of your purchased {purchased} coupons have been reedemed at {timedate}. In case the coupon was not redeemed by you, please get in touch with us.
+        This mail is to notify you that {cop} out of {purchased} coupons from your QR code based ticket have been reedemed (Time: {timedate}). In case the coupon was not redeemed by you, please reply back to tis email.
         We hope you enjoyed your meal. Wish you and your loved ones a happy onam. 
 Thank You,
 System: Sarin C Jacob 
@@ -28,16 +31,17 @@ System: Sarin C Jacob
     else:
         mail_content=f'''
 Hello {name},
-        This Mail is to notify you that your food coupon has been redeemed and is no more valid. In case it was not redeemed by you, please reply back to this email.
+        This Mail is to notify you that your food coupon has been redeemed and is no more valid (Time:{timedate}). In case it was not redeemed by you, please reply back to this email.
         We hope you enjoyed your meal. Wish you and your loved ones a happy onam. 
 Thank You
 System: Sarin C Jacob
         '''
     try:
         #The mail addresses and password
-        sender_address = 'xxxxxx'
-        sender_pass = 'xxxxxxxxx'
+        sender_address = 'sarin.jacob@niser.ac.in'
+        sender_pass = 'uhjrseukfsxlhnjh'
         receiver_address = ide
+        # receiver_address = 'sarin.jacob@niser.ac.in'
         #Setup the MIME
         message = MIMEMultipart()
         message['From'] = sender_address
@@ -84,11 +88,14 @@ while 1:
         maske=cs["Email"].values==em
         pose = np.flatnonzero(maske)
         if len(pose)>0:
+            k=0
             for i in range(len(pose)):
                 if cs["Count"][pose[i]]>0:
                     a=cs['Secret'][pose[i]]
+                    k=1
                     break
-            ctypes.windll.user32.MessageBoxW(0, "All Coupons exhausted! ","Coupons Ranout.", 16)
+            if k==0:    
+                ctypes.windll.user32.MessageBoxW(0, "All Coupons exhausted! ","Coupons Ranout.", 16)
         else:
             ctypes.windll.user32.MessageBoxW(0, "Please enter a valid Email! ","Not a Registered Email.", 16)
 
@@ -100,7 +107,7 @@ while 1:
             if cs["Count"][pos[0]]>0:
                 if cs["Count"][pos[0]]>1:
                     executor.submit(playsound,r"\\PERSEUS\QR-Cop\retro.wav")
-                    no=pymsgbox.prompt(f"Hello {cs['Name'][pos[0]]}, Your itinary conatins {cs['Count'][pos[0]]} food coupon(s). \n How many coupons would you like to redeem currently?","Happy Onam 😃","1")
+                    no=pymsgbox.prompt(f"Hello {cs['Name'][pos[0]]}, Your itinary conatins {cs['Count'][pos[0]]} food coupon(s). \n How many coupons would you like to redeem currently?","Happy Onam 😃",f"{cs['Count'][pos[0]]}")
                     if no==None :
                         a=None
                         continue
@@ -119,7 +126,7 @@ while 1:
                         # pymsgbox.alert("Validation Succesful", "Valid")
                         logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used {no} coupon/s, {cs["Count"][pos[0]]} left! >PASS')
                         ctypes.windll.user32.MessageBoxW(0, f" {no} food coupon(s) have been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
-                        executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]],no)
+                        executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]],no,cs["Purchased"][pos[0]])
                     else:
                         # pymsgbox.alert("Not enough Coupons ","Not Valid")
                         logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have wanted {no} coupon/s, but thers only {cs["Count"][pos[0]]} left! >FAIL')
