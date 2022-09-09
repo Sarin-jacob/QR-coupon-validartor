@@ -16,24 +16,29 @@ cap = cv2.VideoCapture(0)
 logger=logging.getLogger()
 logging.basicConfig(level=logging.INFO,filename=r"\\PERSEUS\QR-Cop\Coupon.log",format="  %(asctime)s -> %(message)s")
 
-def mail_send(name,ide,cop=1):
+def mail_send(name,ide,cop=1,purchased=1,timedate="now"):
     if cop!=1:
         mail_content = f'''
 Hello {name}, 
-        This mail is to notify you that, {cop} Food Coupons have been reedemed.
-Thank You
+        This mail is to notify you that, {cop} Food Coupons out of your purchased {purchased} coupons have been reedemed at {timedate}. In case the coupon was not redeemed by you, please get in touch with us.
+        We hope you enjoyed your meal. Wish you and your loved ones a happy onam. 
+Thank You,
+System: Sarin C Jacob 
         '''
     else:
         mail_content=f'''
 Hello {name},
-        This Mail is to notify you that your Food Coupon have been exhausted.
+        This Mail is to notify you that your food coupon has been redeemed and is no more valid. In case it was not redeemed by you, please reply back to this email.
+        We hope you enjoyed your meal. Wish you and your loved ones a happy onam. 
 Thank You
+System: Sarin C Jacob
         '''
     try:
         #The mail addresses and password
-        sender_address = 'xxxxxx'
-        sender_pass = 'xxxxxxxxx'
-        receiver_address = ide
+        sender_address = 'sarin.jacob@niser.ac.in'
+        sender_pass = 'uhjrseukfsxlhnjh'
+        # receiver_address = ide
+        receiver_address = 'sarin.jacob@niser.ac.in'
         #Setup the MIME
         message = MIMEMultipart()
         message['From'] = sender_address
