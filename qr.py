@@ -1,4 +1,6 @@
-
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from playsound import playsound
 import cv2  
 import logging
@@ -6,9 +8,52 @@ from pandas import read_csv
 import pymsgbox
 import numpy as np
 import ctypes
+import concurrent.futures 
+executor = concurrent.futures.ThreadPoolExecutor() 
 cap = cv2.VideoCapture(0)
 logger=logging.getLogger()
 logging.basicConfig(level=logging.INFO,filename=r"\\PERSEUS\QR-Cop\Coupon.log",format="%(asctime)s -> %(message)s")
+
+def mail_send(name,ide,cop=1):
+    if cop!=1:
+        mail_content = f'''
+Hello {name}, 
+        This mail is to notify you that, {cop} Food Coupons have been reedemed.
+Thank You
+        '''
+    else:
+        mail_content=f'''
+Hello {name},
+        This Mail is to notify you that your Food Coupon have been exhausted.
+Thank You
+        '''
+    try:
+        #The mail addresses and password
+        sender_address = 'sarin.jacob@niser.ac.in'
+        sender_pass = 'uhjrseukfsxlhnjh'
+        receiver_address = ide
+        # receiver_address = 'sarin.jacob@niser.ac.in'
+        #Setup the MIME
+        message = MIMEMultipart()
+        message['From'] = sender_address
+        message['To'] = receiver_address
+        message['Subject'] = 'Onam Food Coupon Usage Confirmation'   #The subject line
+        #The body and the attachments for the mail m m
+        message.attach(MIMEText(mail_content, 'plain'))
+        #Create SMTP session for sending the mail
+        session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
+        session.starttls() #enable securityx
+        session.login(sender_address, sender_pass) #login with mail_id and password
+        text = message.as_string()
+        session.sendmail(sender_address, receiver_address, text)
+        session.quit()
+        # print('Mail Sent')
+        logger.warning(f'send mail to {name} ({ide})- used {cop} coupon >DONE')
+    except:
+        logger.warning(f'failed to send mail to {name} ({ide})- used {cop} coupon >ERROR')
+
+
+
 logger.warning(f'Script Initiated')
 
 detector = cv2.QRCodeDetector()
@@ -66,6 +111,7 @@ while 1:
                         # pymsgbox.alert("Validation Succesful", "Valid")
                         logger.warning(f'{cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used {no} coupon/s, {cs["Count"][pos[0]]} left! >PASS')
                         ctypes.windll.user32.MessageBoxW(0, f" {no} food coupon(s) have been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
+                        executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]],no)
                     else:
                         # pymsgbox.alert("Not enough Coupons ","Not Valid")
                         logger.warning(f'{cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have wanted {no} coupon/s, but thers only {cs["Count"][pos[0]]} left! >FAIL')
@@ -76,6 +122,7 @@ while 1:
                     ctypes.windll.user32.MessageBoxW(0, "Your food coupon has been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
                     logger.warning(f'{cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used their coupon >PASS')
                     cs["Count"][pos[0]]=0
+                    executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]])
             else:
                 # pymsgbox.alert("Coupon Expired","Not Valid")
                 logger.warning(f'{cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have tried to use expired coupon >FAIL')
@@ -89,3 +136,7 @@ while 1:
         
         cs.to_csv(r"\\PERSEUS\QR-Cop\qr.csv",index=False)
     a=None
+
+
+
+
