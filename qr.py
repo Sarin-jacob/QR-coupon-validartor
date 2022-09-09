@@ -29,10 +29,10 @@ Thank You
         '''
     try:
         #The mail addresses and password
-        sender_address = 'sarin.jacob@niser.ac.in'
-        sender_pass = 'uhjrseukfsxlhnjh'
+        sender_address = 'xxxxxx'
+        sender_pass = 'xxxxxxxxx'
         receiver_address = ide
-        # receiver_address = 'sarin.jacob@niser.ac.in'
+        # receiver_address = 'xxxxxxx'
         #Setup the MIME
         message = MIMEMultipart()
         message['From'] = sender_address
