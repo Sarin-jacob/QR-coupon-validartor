@@ -37,9 +37,11 @@ Thank You
 System: Sarin C Jacob
         '''
     try:
-        sender_address = 'xxxxxx'
-        sender_pass = 'xxxxxxxxx'
+        #The mail addresses and password
+        sender_address = 'sarin.jacob@niser.ac.in'
+        sender_pass = 'uhjrseukfsxlhnjh'
         receiver_address = ide
+        # receiver_address = 'sarin.jacob@niser.ac.in'
         #Setup the MIME
         message = MIMEMultipart()
         message['From'] = sender_address
@@ -82,6 +84,31 @@ while 1:
         if em==None :
             a=None
             continue
+        elif em=="entryleft":
+            cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
+            sumi=0
+            for i in cs['Count']:
+                sumi+=i
+            ctypes.windll.user32.MessageBoxW(0, f"{sumi} entries left ","Entries Left!!", 64)
+            continue
+        elif em=="scansdone":
+            cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
+            sumi=0
+            for i in cs['Entered']:
+                sumi+=i
+            ctypes.windll.user32.MessageBoxW(0, f"{sumi} entered ","Entries Done!!", 64)
+            continue
+        elif em=="savecsv":
+            now = datetime.now()
+            timedate = now.strftime("%d-%m_%H.%M")
+            cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
+            cs.to_csv(rf"\\PERSEUS\QR-Cop\qrsave_{timedate}.csv",index=False)
+        elif em=="exit":
+            cap.release()
+            cv2.destroyAllWindows()
+            logger.warning(f'{ho}: Script Terminated')
+            break
+
         cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
         maske=cs["Email"].values==em
         pose = np.flatnonzero(maske)
@@ -121,6 +148,11 @@ while 1:
 
                     if cs["Count"][pos[0]]-int(no)>-1:
                         cs["Count"][pos[0]]=cs["Count"][pos[0]]-int(no)
+                        if cs["Entered"][pos[0]]==None:
+                            cs["Entered"][pos[0]]=0
+                            cs["Entered"][pos[0]]=cs["Entered"][pos[0]]+int(no)
+                        else:
+                            cs["Entered"][pos[0]]=cs["Entered"][pos[0]]+int(no)
                         # pymsgbox.alert("Validation Succesful", "Valid")
                         logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used {no} coupon/s, {cs["Count"][pos[0]]} left! >PASS')
                         ctypes.windll.user32.MessageBoxW(0, f" {no} food coupon(s) have been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
@@ -135,6 +167,11 @@ while 1:
                     ctypes.windll.user32.MessageBoxW(0, "Your food coupon has been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
                     logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used their coupon >PASS')
                     cs["Count"][pos[0]]=0
+                    if cs["Entered"][pos[0]]==None:
+                        cs["Entered"][pos[0]]=0
+                        cs["Entered"][pos[0]]=cs["Entered"][pos[0]]+1
+                    else:
+                        cs["Entered"][pos[0]]=cs["Entered"][pos[0]]+1
                     executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]])
             else:
                 # pymsgbox.alert("Coupon Expired","Not Valid")
