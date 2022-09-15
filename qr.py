@@ -11,11 +11,24 @@ from pandas import read_csv
 import pymsgbox
 import numpy as np
 import ctypes
-import concurrent.futures 
+import concurrent.futures
+import pickle 
 executor = concurrent.futures.ThreadPoolExecutor() 
 cap = cv2.VideoCapture(0)
 logger=logging.getLogger()
 logging.basicConfig(level=logging.INFO,filename=r"\\PERSEUS\QR-Cop\Coupon.log",format="  %(asctime)s -> %(message)s")
+
+def saver(obj,filename):
+    with open(filename,"wb")as f:
+        pickle.dump(obj,f)
+def loader(filename):
+    with open(filename,"rb")as f:
+        obj =pickle.load(f)
+    return obj
+
+def effify(non_f_str: str):
+    return eval(f'f"""{non_f_str}"""')
+
 
 def mail_send(name,ide,cop=1,purchased=1):
     now = datetime.now()
@@ -38,8 +51,8 @@ System: Sarin C Jacob
         '''
     try:
         #The mail addresses and password
-        sender_address = 'xxxxxx'
-        sender_pass = 'xxxxxxxxx'
+        sender_address = 'sarin.jacob@niser.ac.in'
+        sender_pass = 'uhjrseukfsxlhnjh'
         receiver_address = ide
         # receiver_address = 'sarin.jacob@niser.ac.in'
         #Setup the MIME
@@ -65,6 +78,9 @@ System: Sarin C Jacob
 
 logger.warning(f'{ho}: Script Initiated')
 
+
+messagebox=ctypes.windll.user32.MessageBoxW
+
 detector = cv2.QRCodeDetector()
 a=None
 while 1:
@@ -89,14 +105,14 @@ while 1:
             sumi=0
             for i in cs['Count']:
                 sumi+=i
-            ctypes.windll.user32.MessageBoxW(0, f"{sumi} entries left ","Entries Left!!", 64)
+            messagebox(0, f"{sumi} entries left ","Entries Left!!", 64)
             continue
         elif em=="scansdone":
             cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv")
             sumi=0
             for i in cs['Entered']:
                 sumi+=i
-            ctypes.windll.user32.MessageBoxW(0, f"{sumi} entered ","Entries Done!!", 64)
+            messagebox(0, f"{sumi} entered ","Entries Done!!", 64)
             continue
         elif em=="savecsv":
             now = datetime.now()
@@ -120,9 +136,9 @@ while 1:
                     k=1
                     break
             if k==0:    
-                ctypes.windll.user32.MessageBoxW(0, "All Coupons exhausted! ","Coupons Ranout.", 16)
+                messagebox(0, "All Coupons exhausted! ","Coupons Ranout.", 16)
         else:
-            ctypes.windll.user32.MessageBoxW(0, "Please enter a valid Email! ","Not a Registered Email.", 16)
+            messagebox(0, "Please enter a valid Email! ","Not a Registered Email.", 16)
 
     if a:
         cs=read_csv(r"\\PERSEUS\QR-Cop\qr.csv") 
@@ -139,11 +155,11 @@ while 1:
                     try:
                         int(no)
                     except:
-                        ctypes.windll.user32.MessageBoxW(0, "Please enter a valid number! ","Not a valid number.", 16)
+                        messagebox(0, "Please enter a valid number! ","Not a valid number.", 16)
                         continue
                     
                     if no=="0" :
-                        ctypes.windll.user32.MessageBoxW(0, "You entered 0 coupons for redemption. Please enter a valid number of coupons to be redeemed.","Invalid Request.", 16)
+                        messagebox(0, "You entered 0 coupons for redemption. Please enter a valid number of coupons to be redeemed.","Invalid Request.", 16)
                         continue
 
                     if cs["Count"][pos[0]]-int(no)>-1:
@@ -155,16 +171,16 @@ while 1:
                             cs["Entered"][pos[0]]=cs["Entered"][pos[0]]+int(no)
                         # pymsgbox.alert("Validation Succesful", "Valid")
                         logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used {no} coupon/s, {cs["Count"][pos[0]]} left! >PASS')
-                        ctypes.windll.user32.MessageBoxW(0, f" {no} food coupon(s) have been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
+                        messagebox(0, f" {no} food coupon(s) have been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
                         executor.submit(mail_send,cs["Name"][pos[0]],cs["Email"][pos[0]],no,cs["Purchased"][pos[0]])
                     else:
                         # pymsgbox.alert("Not enough Coupons ","Not Valid")
                         logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have wanted {no} coupon/s, but thers only {cs["Count"][pos[0]]} left! >FAIL')
-                        ctypes.windll.user32.MessageBoxW(0, f"😕 You only have {cs['Count'][pos[0]]} coupon(s) left.","Insufficient Balance", 16)
+                        messagebox(0, f"😕 You only have {cs['Count'][pos[0]]} coupon(s) left.","Insufficient Balance", 16)
                         continue
                 else:
                     # pymsgbox.alert("Validation Succesful", "Valid")
-                    ctypes.windll.user32.MessageBoxW(0, "Your food coupon has been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
+                    messagebox(0, "Your food coupon has been redeemed.✅ \n Have a happy meal 😃", "Welcome", 64)
                     logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have used their coupon >PASS')
                     cs["Count"][pos[0]]=0
                     if cs["Entered"][pos[0]]==None:
@@ -176,10 +192,10 @@ while 1:
             else:
                 # pymsgbox.alert("Coupon Expired","Not Valid")
                 logger.warning(f'{ho}: {cs["Name"][pos[0]]} ({cs["Email"][pos[0]]}) have tried to use expired coupon >FAIL')
-                ctypes.windll.user32.MessageBoxW(0, "All food coupons have been already redeemed ☠️. This QR Code is no more valid.","Ticket Exhausted", 16)
+                messagebox(0, "All food coupons have been already redeemed ☠️. This QR Code is no more valid.","Ticket Exhausted", 16)
         else:
             # pymsgbox.alert("QR not Valid","COUNTERFEIT")
-            ctypes.windll.user32.MessageBoxW(0, "Oops! Something went wrong ❌","Invalid QR Code", 16)
+            messagebox(0, "Oops! Something went wrong ❌","Invalid QR Code", 16)
             logger.warning(f'{ho}: Invalid QR Code')
 
         # print(cs)
